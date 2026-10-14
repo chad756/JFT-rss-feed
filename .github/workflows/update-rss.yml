@@ -1,0 +1,34 @@
+name: Update JFT RSS
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 07:15 and 13:15 UTC = about 1 AM and 7 AM in Edmonton (the second run is a backup)
+    - cron: '15 7 * * *'
+    - cron: '15 13 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate RSS feed
+        run: python3 jftna_rss_generator.py
+
+      - name: Commit updated feed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add jftna.xml
+          git diff --cached --quiet || git commit -m "Update JFT RSS $(date -u +%F)"
+          git push
